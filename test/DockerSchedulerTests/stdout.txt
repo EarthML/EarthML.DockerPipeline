@@ -1,0 +1,11 @@
+﻿Completed 100.00%!()
+('AABB: ', 480000, 6150000, -1580, 530000, 6200000, 755)
+('#Points:', 20517377941)
+('Average density [pts / m2]:', 8.2069511764)
+('Suggested number of tiles: ', 16.0)
+('Suggested Potree-OctTree CAABB: ', 480000, 6150000, -1580, 530000, 6200000, 48420)
+('Suggested Potree-OctTree spacing: ', 205.0)
+('Suggested Potree-OctTree number of levels: ', 11)
+Suggested potreeconverter command:
+$(which PotreeConverter) -o <potree output directory> -l 11 -s 205 --CAABB "480000 6150000 -1580 530000 6200000 48420" --output-format LAZ -i <laz input directory>
+Finished in 7.63 seconds

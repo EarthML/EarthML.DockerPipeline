@@ -1,0 +1,105 @@
+{
+  "parameters": {
+    "numberOfProcesses": {
+      "type": "number",
+      "metadata": "Number of processes [default is 1]",
+      "defaultValue": 1
+    },
+    "lidarInputFolder": {
+      "type": "path",
+      "metadata": "The location of lidar files"
+    },
+    "lidarTilesFolder": {
+      "type": "path",
+      "metadata": "The location of lidar tiles"
+    },
+    "lidarTempFolder": {
+      "type": "path",
+      "metadata": "The location of lidar tmp files"
+    },
+    "potreeOutputFolder": {
+      "type": "path",
+      "metadata": "The location of lidar tmp files"
+    }
+  },
+  "volumes": {
+    "mpc-info-data": {
+      "mountedAt": "/data1",
+      "mountedFrom": "[parameters('lidarInputFolder')]"
+    },
+    "mpc-tiling-data": {
+      "mountedAt": "/data2",
+      "mountedFrom": "[parameters('lidarTilesFolder')]"
+    },
+    "mpc-tiling-temp": {
+      "mountedAt": "/data3",
+      "mountedFrom": "[parameters('lidarTempFolder')]"
+    },
+    "mpc-tiling-dist": {
+      "mountedAt": "/data1",
+      "mountedFrom": "[parameters('potreeOutputFolder')]"
+    }
+  },
+  "steps": [
+    {
+      "name": "mpc-info",
+      "image": "oscar/mpc:v1",
+      "command": [ "mpc-info", "-i", "[mountedAt('mpc-info-data')]", "-c", "[parameters('numberOfProcesses')]" ],
+      "dependsOn": [ "/volumes/mpc-info-data" ],
+      "outputs": {
+        "AABB": "[numbers(split(regex(stdout(0),\"\\('AABB: ', (.*?)\\)\",\"$1\")))]",
+        "numberOfTiles": "[int(regex(stdout(0),\"\\('Suggested number of tiles: ', (.*?)\\)\",\"$1\"))]",
+        "levels": "[int(regex(stdout(0),\"\\('Suggested Potree-OctTree number of levels: ', (.*?)\\)\",\"$1\"))]",
+        "spacing": "[number(regex(stdout(0),\"\\('Suggested Potree-OctTree spacing: ', (.*?)\\)\",\"$1\"))]"
+      }
+    },
+    {
+      "name": "mpc-tiling",
+      "image": "oscar/mpc:v1",
+      "dependsOn": [ "mpc-info", "/volumes/mpc-info-data", "/volumes/mpc-tiling-data", "/volumes/mpc-tiling-temp" ],
+      "skip": "[exists(mountedFrom('mpc-tiling-data'))]",
+      "command": [
+        "mpc-tiling",
+        "-i", "[mountedAt('mpc-info-data')]",
+        "-o", "[mountedAt('mpc-tiling-data')]",
+        "-t", "[mountedAt('mpc-tiling-temp')]",
+        "-e", "[concat(output('mpc-info','$.AABB[0]') ,' ', output('mpc-info','$.AABB[1]'),' ', output('mpc-info','$.AABB[3]'),' ', output('mpc-info','$.AABB[4]'))]",
+        "-n", "[output('mpc-info','$.numberOfTiles')]",
+        "-p", "[parameters('numberOfProcesses')]"
+      ]
+    },
+    {
+      "name": "mpc-map",
+      "image": "oscar/mpc:v1",
+      "dependsOn": [ "mpc-tiling", "/volumes/mpc-tiling-dist", "/volumes/mpc-tiling-data" ],
+      "loop": "[folders(mountedFrom('mpc-tiling-data'))]",
+      "skip": "[exists(concat(mountedFrom('mpc-tiling-dist'), '/poctrees/' ,loop('folderName'), '_potree'))]",
+      "command": [
+        "PotreeConverter",
+        "--outdir",
+        "[concat(mountedAt('mpc-tiling-dist'), '/poctrees/' ,loop('folderName'), '_potree')]",
+        "--levels",
+        "[output('mpc-info','$.levels')]",
+        "--output-format",
+        "LAZ",
+        "--source",
+        "[concat(mountedAt('mpc-tiling-data'),'/', loop('folderName'))]",
+        "--spacing",
+        "[output('mpc-info','$.spacing')]",
+        "--aabb",
+        "[join(' ', output('mpc-info','$.AABB'))]",
+        "--projection",
+        "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+      ]
+    },
+    {
+      "name": "mpc-reduce",
+      "image": "oscar/mpc:v1",
+      "dependsOn": [ "mpc-copy", "/volumes/mpc-tiling-dist" ],
+      "command": [ "mpc-merge-all", "-i", "[concat(mountedAt('mpc-tiling-dist'), '/poctrees')]", "-o", "[concat(mountedAt('mpc-tiling-dist'), '/poctrees_merge')]", "-m" ],
+      "outputs": {
+        "data": "[regex(stdout(0),\"\\('Final merged Potree-OctTree is in: ', '(.*?)'\\)\",\"$1\")]"        
+      }
+    }
+  ]
+}
