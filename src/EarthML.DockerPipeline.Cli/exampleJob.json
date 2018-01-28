@@ -95,7 +95,7 @@
     {
       "name": "mpc-reduce",
       "image": "oscar/mpc:v1",
-      "dependsOn": [ "mpc-copy", "/volumes/mpc-tiling-dist" ],
+      "dependsOn": [ "mpc-map", "/volumes/mpc-tiling-dist" ],
       "command": [ "mpc-merge-all", "-i", "[concat(mountedAt('mpc-tiling-dist'), '/poctrees')]", "-o", "[concat(mountedAt('mpc-tiling-dist'), '/poctrees_merge')]", "-m" ],
       "outputs": {
         "data": "[regex(stdout(0),\"\\('Final merged Potree-OctTree is in: ', '(.*?)'\\)\",\"$1\")]"        
