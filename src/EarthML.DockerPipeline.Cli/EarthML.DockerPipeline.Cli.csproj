@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <LangVersion>latest</LangVersion>    
-    <RuntimeIdentifier>win10-x86</RuntimeIdentifier>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
@@ -14,17 +13,28 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Docker.DotNet" Version="3.125.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Docker.DotNet" Version="3.125.1" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.0.0-alpha2-final" />
+    <PackageReference Include="Microsoft.Azure.Management.ContainerInstance.Fluent" Version="1.7.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EarthML.DockerPipeline\EarthML.DockerPipeline.csproj" />
+    <ProjectReference Include="..\EarthML.DockerScheduler.AzureContainerInstance\EarthML.DockerScheduler.AzureContainerInstance.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update=".dockerignore">
       <DependentUpon>dockerfile</DependentUpon>
+    </None>
+    <None Update="examples\sen2cor_daemon.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="examples\sen2cor_aci.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="exampleJob.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

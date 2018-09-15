@@ -18,6 +18,10 @@ namespace EarthML.DockerPipeline.Parameters
                 {
                     parameter.Value.Replace(arguments[idx + 1]);
                 }
+                else
+                {
+                    parameter.Value.Replace(parameter.Value.SelectToken("$.defaultValue"));
+                }
             }
 
             return document;

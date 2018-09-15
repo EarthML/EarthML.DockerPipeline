@@ -1,0 +1,84 @@
+{
+  "parameters": {
+    "numberOfProcesses": {
+      "type": "number",
+      "metadata": "Number of processes [default is 1]",
+      "defaultValue": 1
+    },
+    "id": {
+      "type": "string",
+      "metadata": "The location of lidar files"
+    },
+    "storageAccountKey": {
+      "type": "password"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "shareName": {
+      "type": "string"
+    },
+    "shareName1": {
+      "type": "string"
+    },
+    "registryUsername": {
+      "type": "string"
+    },
+    "registryPassword": {
+      "type": "password"
+    },
+    "registryServer": {
+      "type": "string"
+    }
+  },
+  "imageRegistryCredentials": [
+    {
+      "server": "[parameters('registryServer')]",
+      "password": "[parameters('registryPassword')]",
+      "username": "[parameters('registryUsername')]"
+    }
+  ],
+  "volumes": {
+    "datain": {
+      "mountedAt": "/data1/",
+      "azureFileShare": {
+        "shareName": "[parameters('shareName')]",
+        "storageAccountKey": "[parameters('storageAccountKey')]",
+        "storageAccountName": "[parameters('storageAccountName')]"
+      }
+    },
+    "dataout": {
+      "mountedAt": "[concat('/data1/', replace(parameters('id'),'MSIL1C','MSIL2A'),'.SAFE')]",
+      "azureFileShare": {
+        "shareName": "[parameters('shareName1')]",
+        "storageAccountKey": "[parameters('storageAccountKey')]",
+        "storageAccountName": "[parameters('storageAccountName')]"
+      }
+    },
+     "unzip": {
+      "mountedAt": "/unzip",
+      "azureFileShare": {
+        "shareName": "[parameters('shareName')]",
+        "storageAccountKey": "[parameters('storageAccountKey')]",
+        "storageAccountName": "[parameters('storageAccountName')]"
+      }
+    },
+  },
+  "pipe": [
+    {
+      "name": "sen2cor-unzip",
+      "image": "earthml/unzip",
+      "command": [ "unzip","-o", "[concat(parameters('id'),'.zip')]" ],
+      "dependsOn": [ "/volumes/unzip" ],
+      "outputs": {
+        "stdout": "[stdout(0)]"
+      }
+    },
+    {
+      "name": "sen2cor",
+      "image": "earthml/sen2cor",
+      "command": [ "/Sen2Cor-2.4.0-Linux64/bin/L2A_Process", "--resolution", "60", "--GIP_L2A", "/root/sen2cor/cfg/L2A_GIPP_without_dem.xml", "[concat(mountedAt('datain'),parameters('id'),'.SAFE')]" ],
+      "dependsOn": [ "/volumes/datain", "/volumes/dataout", "sen2cor-unzip" ]
+    }
+  ]
+}

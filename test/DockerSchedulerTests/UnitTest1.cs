@@ -17,9 +17,43 @@ namespace DockerPipelineTests
     [TestClass]
     public class UnitTest1
     {
+        [TestMethod]
+        public void canStringHaveProps()
+        {
+            var parser = new ExpressionParser(new JObject())
+                .AddRegex().AddSplit().AddAll().AddConcat();
+            parser.Functions["test"] = 
+                (d,a)=> new JObject(new JProperty("a",1));
 
-       
+            Assert.AreEqual(1, parser.Evaluate("[test().a]"));
+        }
 
+        [TestMethod]
+        public void TestSplitArrayIndex()
+        {
+            var parser = new ExpressionParser(new JObject())
+              .AddRegex().AddSplit().AddAll().AddConcat();
+
+            Assert.AreEqual("test", parser.Evaluate("[concat(split('test','es')[0],'est')]"));
+        }
+
+        [TestMethod]
+        public void TestDateWeek()
+        {
+            var parser = new ExpressionParser(new JObject())
+              .AddRegex().AddSplit().AddAll().AddConcat();
+            Assert.AreEqual("W4", new DateTime(2017, 2, 1).ToString("W4"));
+            Assert.AreEqual("2017W5", parser.Evaluate("[date('2017-02-01','yyyyW')]"));
+        }
+
+        [TestMethod]
+        public void DateTest()
+        {
+            var parser = new ExpressionParser(new JObject())
+              .AddRegex().AddSplit().AddAll();
+
+            Assert.AreEqual("2017Feb", parser.Evaluate("[date('2017-02-15','yyyyMMM')]"));
+        }
 
         [TestMethod]
         public void TestMethod1()

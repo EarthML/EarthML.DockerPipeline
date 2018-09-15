@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EarthML.DockerScheduler.AzureContainerInstance", "src\EarthML.DockerScheduler.AzureContainerInstance\EarthML.DockerScheduler.AzureContainerInstance.csproj", "{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EarthML.DockerPipeline.ServiceProvdier", "src\EarthML.DockerPipeline.ServiceProvdier\EarthML.DockerPipeline.ServiceProvdier.csproj", "{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +38,14 @@ Global
 		{A37F4937-C2FA-484C-B4D8-08B1BBE9BF89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A37F4937-C2FA-484C-B4D8-08B1BBE9BF89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A37F4937-C2FA-484C-B4D8-08B1BBE9BF89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

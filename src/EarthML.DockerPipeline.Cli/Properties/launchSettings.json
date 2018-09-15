@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "EarthML.DockerPipeline.Cli": {
+      "commandName": "Project"
+    }
+  }
+}

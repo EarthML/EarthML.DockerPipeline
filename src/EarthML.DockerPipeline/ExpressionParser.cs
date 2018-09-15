@@ -3,76 +3,16 @@ using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace EarthML.DockerPipeline
 {
-    public static class RegexExpressionParser
-    {
-        private static JToken ParametersFunc(JToken document, JToken[] arg)
-        {
-            return document.SelectToken($"$.parameters.{arg[0].ToString()}");
-        }
-
-        private static JToken MountedFromFunc(JToken document, JToken[] arg)
-        {
-            return document.SelectToken($"$.volumes.{arg[0].ToString()}.mountedFrom").ToString();
-        }
-
-        private static JToken MountedAtFunc(JToken document, JToken[] arg)
-        {
-            var volumne = document.SelectToken($"$.volumes.{arg[0].ToString()}");
-            if (volumne == null)
-            {
-                throw new Exception($"The volume with name {arg[0].ToString()} was not found");
-            }
-            return volumne.SelectToken("$.mountedAt").ToString();
-        }
-
-        public static ExpressionParser AddConcat(this ExpressionParser parser)
-        {
-            parser.Functions["concat"] = (document,arguments) => string.Join("", arguments.Select(k => k.ToString()));
-            return parser;
-        }
-
-        public static ExpressionParser AddSplit(this ExpressionParser parser)
-        {
-            parser.Functions["split"] = (document,arguments) => JArray.FromObject(arguments.Single().ToString().Split(","));
-            return parser;
-        }
-        public static ExpressionParser AddRegex(this ExpressionParser parser)
-        {
-            parser.Functions["regex"] = RegexFunc;
-            return parser;
-        }
-        public static ExpressionParser AddAll(this ExpressionParser parser)
-        {
-            parser.Functions["mountedAt"] = MountedAtFunc;
-            parser.Functions["mountedFrom"] = MountedFromFunc;
-            parser.Functions["parameters"] = ParametersFunc;
-
-
-            return parser;
-        }
-
-        private static JToken RegexFunc(JToken document, JToken[] arguments)
-        {
-            var group = int.Parse(arguments[2].ToString().Trim('$'));
-            var input = arguments[0].ToString();
-            var pattern = arguments[1].ToString();
-
-            return SelectRegexGroup(group,
-                Regex.Match(input, pattern));
-        }
-        private static JToken SelectRegexGroup(int v, Match match)
-        {
-            return JToken.FromObject(match.Groups[v].Value);
-        }
-    }
     public class ExpressionParser
     {
         public readonly Parser<IJTokenEvaluator> Function;
         public readonly Parser<IJTokenEvaluator> Constant;
+        public readonly Parser<IJTokenEvaluator> ArrayIndexer;
+        public readonly Parser<IJTokenEvaluator> PropertyAccess;
+        public readonly Parser<IJTokenEvaluator[]> Tokenizer;
 
         private static readonly Parser<char> DoubleQuote = Parse.Char('"');
         private static readonly Parser<char> SingleQuote = Parse.Char('\'');
@@ -81,7 +21,7 @@ namespace EarthML.DockerPipeline
         private static readonly Parser<char> QdText =
             Parse.AnyChar.Except(DoubleQuote);
         private static readonly Parser<char> QdText1 =
-    Parse.AnyChar.Except(SingleQuote);
+            Parse.AnyChar.Except(SingleQuote);
 
         //private static readonly Parser<char> QuotedPair =
         //    from _ in Backslash
@@ -108,22 +48,63 @@ namespace EarthML.DockerPipeline
                                                            select new DecimalConstantEvaluator(decimal.Parse(num) * (op.IsDefined ? -1 : 1));
 
         public JToken Document { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+       
         public ExpressionParser(JToken document)
         {
+            Constant = Parse.LetterOrDigit.AtLeastOnce().Text().Select(k => new ConstantEvaluator(k));
+
+            Tokenizer = from expr in Parse.Ref(() => Parse.Ref(() => (Function.Or(Number).Or(QuotedString).Or(QuotedSingleString).Or(Constant)).Or(ArrayIndexer).Or(PropertyAccess)).AtLeastOnce()).Optional().DelimitedBy(Parse.Char(',').Token())
+                        select FixArrayIndexers(expr.Select(c => (c.GetOrDefault() ?? Enumerable.Empty<IJTokenEvaluator>()).ToArray()).ToArray());
+
             Function = from name in Parse.Letter.AtLeastOnce().Text()
                        from lparen in Parse.Char('(')
-                       from expr in Parse.Ref(() => Function.Or(Number).Or(QuotedString).Or(QuotedSingleString).Or(Constant)).DelimitedBy(Parse.Char(',').Token())
+                       from expr in Tokenizer
                        from rparen in Parse.Char(')')
-                       select CallFunction(name, expr.ToArray());
+                           select CallFunction(name, expr);
 
-            Constant = Parse.LetterOrDigit.AtLeastOnce().Text().Select(k => new ConstantEvaluator(k));
+            PropertyAccess = from first in Parse.Char('.')
+                             from text in Parse.LetterOrDigit.AtLeastOnce().Text()
+                             select new ObjectLookup(text);
+
+            ArrayIndexer = from first in Parse.Char('[')
+                           from text in Parse.Number
+                           from last in Parse.Char(']')
+                           select new ArrayIndexLookup(text); ;
+
             Document = document;
         }
 
+        private IJTokenEvaluator[] FixArrayIndexers(IJTokenEvaluator[][] enumerable)
+        {
+            return enumerable.Where(c=>c.Any()).Select(c => ArrayLookup(c)).ToArray();
+        }
 
-        
+        private IJTokenEvaluator ArrayLookup(IJTokenEvaluator[] c)
+        {
+            if(c.Length == 1)
+                return c.First();
+
+            if (c.Length == 2 && c[1] is ArrayIndexLookup looup)
+            {
+                looup.ArrayEvaluator = c[0];
+                return looup;
+            }
+            
+            if(c.Length == 2 && c[1] is ObjectLookup lookup)
+            {
+                lookup.Object = c[0];
+                return lookup;
+            }
+
+                return null;
+
+        }
+
         public JToken Evaluate(string name, params JToken[] arguments)
         {
+            if (!Functions.ContainsKey(name))
+                throw new Exception($"{name} not found in functions");
             return Functions[name](Document,arguments);
 
         }
@@ -134,18 +115,45 @@ namespace EarthML.DockerPipeline
         }
 
         public JToken Evaluate(string str)
-        {
-            var stringParser = //Apparently the name 'string' was taken...
+        {  
+
+            Parser<IJTokenEvaluator[]> stringParser =  
                  from first in Parse.Char('[')
-                 from text in this.Function
+                 from evaluator in Tokenizer  
                  from last in Parse.Char(']')
-                 select text;
+                 select evaluator;
 
 
 
-            var func = stringParser.Parse(str);
+            var func = stringParser.Parse(str).ToArray();
+            if(func.Length == 1)
+             return func.First().Evaluate();
 
-            return func.Evaluate();
+            for(var i = 0; i < func.Length; i++)
+            {
+                if (func[i] is ArrayIndexLookup array)
+                {
+                    var arrayToken = func[i-1].Evaluate();
+                    if (arrayToken.Type != JTokenType.Array)
+                        throw new Exception("not an array");
+
+                    return arrayToken[int.Parse(array.parsedText)];
+
+                }else if( func[i] is ObjectLookup objectLookup)
+                {
+                    var arrayToken = func[i - 1].Evaluate();
+                    if (arrayToken.Type != JTokenType.Object)
+                        throw new Exception("not an object");
+
+                    return arrayToken[objectLookup.text];
+
+                }
+            }
+
+            return null;
+           
+
+
         }
 
 
