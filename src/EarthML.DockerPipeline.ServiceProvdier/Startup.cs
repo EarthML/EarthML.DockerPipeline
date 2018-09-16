@@ -35,7 +35,7 @@ namespace EarthML.DockerPipeline.ServiceProvdier
         public async Task Connected(string[] containers)
         {
 
-            await Clients.Client(Context.ConnectionId).InvokeAsync("Welcome :" + Context.ConnectionId);
+            await Clients.Client(Context.ConnectionId).SendAsync("msg","Welcome :" + Context.ConnectionId);
         }
 
         public async Task pipeline_recieved(string id)
@@ -53,7 +53,7 @@ namespace EarthML.DockerPipeline.ServiceProvdier
         {
             var id = Guid.NewGuid().ToString("N");
 
-            await hub.Clients.All.InvokeAsync("run_pipeline", arg1: new { id, data }).ConfigureAwait(false);
+            await hub.Clients.All.SendAsync("run_pipeline", arg1: new { id, data }).ConfigureAwait(false);
 
              var task = new TaskCompletionSource<byte[]>();
             _tasks[id] = task;

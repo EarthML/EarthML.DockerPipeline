@@ -92,11 +92,11 @@ namespace EarthML.DockerScheduler.AzureContainerInstance
                 cn = await client.ContainerGroups.GetAsync(Options.ResourceGroup, Options.ContainerGroupName);
             }
 
-            var log = await client.ContainerLogs.ListAsync(Options.ResourceGroup, part.SelectToken("$.name").ToString(), Options.ContainerGroupName);
+        //    var log = await client.ContainerLogs.ListAsync(Options.ResourceGroup, part.SelectToken("$.name").ToString(), Options.ContainerGroupName);
 
             await client.ContainerGroups.DeleteAsync(Options.ResourceGroup, Options.ContainerGroupName, cancellationToken);
 
-            return log.Content;
+            return "";// log.Content;
         }
 
         public Task PipelineFinishedAsync(ExpressionParser parser)

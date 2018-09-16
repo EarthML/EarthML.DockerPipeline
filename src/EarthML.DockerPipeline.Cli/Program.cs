@@ -119,7 +119,11 @@ namespace EarthML.DockerPipelineCli
                 var connected = true;
                 var connection = new HubConnectionBuilder()
                     .WithUrl("https://dockerpipeline.azurewebsites.net/pipelines")
-                    .WithConsoleLogger()
+                    .ConfigureLogging(c =>
+                    {
+                       
+                    })
+                  //  .WithConsoleLogger()
                     .Build();
 
                 var block = new ActionBlock<DocumentRequest>(async (@event) =>
