@@ -74,33 +74,7 @@ namespace EarthML.DockerPipelineCli
             //return 0;
 
             //Console.WriteLine(new Uri("unix://var/run/docker.sock"));
-            if (string.IsNullOrEmpty(pipeline) && !Daemon)
-            {
-                //--docker-sock npipe://./pipe/docker_engine -p examples/sen2cor_daemon.json --pid 3e5b3ad3-a174-453a-bc32-e568bc09be14 --id S2B_MSIL1C_20180107T102359_N0206_R065_T33UUB_20180107T121759 --username pksorensen --password 123456
-
-                var storage = new CloudStorageAccount(new StorageCredentials("eodata", "z6GbmMTOfzK3w4Z6Cwd5acts1n327qbjWSLAviOhWMzSChA+Q9R/l/Sf5FgjvxhMBnaW4BMTby5Vwk+slmElGQ=="), true);
-                var testcontainer = storage.CreateCloudBlobClient().GetContainerReference("test");
-                await testcontainer.CreateIfNotExistsAsync();
- 
-                var client = new HttpClient();
-                var sw = Stopwatch.StartNew();
-                var post = await client.PostAsync("https://dockerpipeline.azurewebsites.net/subscriptions/test/providers/EarthML.DockerPipeline/PipelineRunners/test/pipelines",
-                    new StringContent(JToken.FromObject(new
-                    {
-                        pipeline = JToken.Parse(File.ReadAllText("examples/sen2cor_daemon.json")),
-                        arguments = new[] {
-                            "--pid", "3e5b3ad3-a174-453a-bc32-e568bc09be14",
-                            "--outputcontainer", testcontainer.Uri.AbsoluteUri ,
-                            "--outputkey", "z6GbmMTOfzK3w4Z6Cwd5acts1n327qbjWSLAviOhWMzSChA+Q9R/l/Sf5FgjvxhMBnaW4BMTby5Vwk+slmElGQ==",
-                            "--id", "S2B_MSIL1C_20180107T102359_N0206_R065_T33UUB_20180107T121759",
-                            "--username", "pksorensen",
-                            "--password", "123456" }
-                    }).ToString(), Encoding.UTF8, "application/json"));
-
-                Console.WriteLine(await post.Content.ReadAsStringAsync());
-                Console.WriteLine(sw.ElapsedMilliseconds);
-                return 0;
-            }
+         
 
             if (Daemon)
             {

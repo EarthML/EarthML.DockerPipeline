@@ -3,16 +3,22 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using EarthML.DockerPipeline.ServiceProvider.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.ServiceFabric.Services.Client;
+using Microsoft.ServiceFabric.Services.Remoting.Client;
 using Newtonsoft.Json.Linq;
+using Unity;
 
-namespace EarthML.DockerPipeline.ServiceProvdier
+namespace EarthML.DockerPipeline.ServiceProvider
 {
 
     public class PipelineRunnerHub : Hub
@@ -82,22 +88,35 @@ namespace EarthML.DockerPipeline.ServiceProvdier
 
 
         [HttpPost]
-        [Route("subscriptions/{subscriptionid}/providers/EarthML.DockerPipeline/PipelineRunners/{id}/pipelines")]
-        public async Task<IActionResult> CreateDocumentOnPipeline(string id, [FromBody] JToken body, [FromServices] PipelineRunnerTaskManager pipelineRunnerTaskManager, [FromServices] IHubContext<PipelineRunnerHub> hubContext)
+        [Route("subscriptions/{subscriptionid}/providers/EarthML.Pipelines/PipelineRunners/{id}/pipelines")]
+        public async Task<IActionResult> CreateDocumentOnPipeline(string id, [FromBody] JToken body
+           // [FromServices] IPipelineRunnerService pipelineRunnerService 
+            //[FromServices] PipelineRunnerTaskManager pipelineRunnerTaskManager, 
+            //[FromServices] IHubContext<PipelineRunnerHub> hubContext
+            )
         {
+            var documentId = Guid.NewGuid().ToString();
+
+            var md5 = MD5.Create();
+            var value = md5.ComputeHash(Encoding.ASCII.GetBytes(documentId));
+            var key = BitConverter.ToInt64(value, 0);
 
 
+            var pipelineRunnerService = ServiceProxy.Create<IPipelineRunnerService>(
+                        new Uri($"fabric:/EarthML.DockerPipelineApplication/PipelineRunnerService"),new ServicePartitionKey(key), listenerName: "V2_1Listener");
+            var document = new DocumentRequest { id = Guid.NewGuid().ToString(), data = body.ToObject<PipelineData>() };
+            await pipelineRunnerService.SendAsync(document);
            
-            var reply = await pipelineRunnerTaskManager.SendAsync(hubContext, body);
+            //var reply = await pipelineRunnerTaskManager.SendAsync(hubContext, body);
 
-            body["id"] = reply;
-            body["status"] = "created";
+            //body["id"] = reply;
+            //body["status"] = "created";
 
             return Ok(body);
 
         }
         [HttpGet]
-        [Route("subscriptions/{subscriptionid}/providers/EarthML.DockerPipeline/PipelineRunners/{id}/pipelines/{pipelineId}")]
+        [Route("subscriptions/{subscriptionid}/providers/EarthML.Pipelines/PipelineRunners/{id}/pipelines/{pipelineId}")]
         public async Task<IActionResult> GetPipeline(string id, string pipelineId, [FromServices] PipelineRunnerTaskManager pipelineRunnerTaskManager, [FromServices] IHubContext<PipelineRunnerHub> hubContext)
         {
 
@@ -131,6 +150,12 @@ namespace EarthML.DockerPipeline.ServiceProvdier
             services.AddSingleton(new PipelineRunnerTaskManager()); 
         }
 
+        public void ConfigureContainer(IUnityContainer container)
+        {
+            container.RegisterInstance("This string is displayed if container configured correctly",
+                                       "This string is displayed if container configured correctly");
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -142,7 +167,7 @@ namespace EarthML.DockerPipeline.ServiceProvdier
             
             app.UseSignalR(routes =>
             {
-                routes.MapHub<PipelineRunnerHub>("pipelines");
+                routes.MapHub<PipelineRunnerHub>("/pipelines");
             });
             app.UseMvc();
         }
