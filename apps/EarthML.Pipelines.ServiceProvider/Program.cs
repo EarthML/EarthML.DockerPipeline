@@ -225,7 +225,7 @@ namespace EarthML.Pipelines.ServiceProvider
             container.WithKestrelHosting<Startup>("EarthML.Pipelines.ServiceProviderType",
                 new KestrelHostingServiceOptions
                 {
-                 //   GatewayApplicationName ="EarthML.Gateway",
+                    GatewayApplicationName = container.Resolve<IHostingEnvironment>().IsProduction()? "EarthML.Gateway":null,
                     GatewayOptions = new GatewayOptions
                     {
                         Key = "EarthML.Pipelines.ServiceProviderType",
