@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27309.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerPipeline.Cli", "src\EarthML.DockerPipeline.Cli\EarthML.DockerPipeline.Cli.csproj", "{E345F4B5-86C7-4F00-A530-E60EA2462089}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.Pipelines.Cli", "src\EarthML.Pipelines.Cli\EarthML.Pipelines.Cli.csproj", "{E345F4B5-86C7-4F00-A530-E60EA2462089}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerPipeline.Tests", "test\DockerSchedulerTests\EarthML.DockerPipeline.Tests.csproj", "{EA59D1BE-0272-4757-BFD2-9D5375E6D01B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.Pipelines.Tests", "test\DockerSchedulerTests\EarthML.Pipelines.Tests.csproj", "{EA59D1BE-0272-4757-BFD2-9D5375E6D01B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerPipeline", "src\EarthML.DockerPipeline\EarthML.DockerPipeline.csproj", "{A37F4937-C2FA-484C-B4D8-08B1BBE9BF89}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.Pipelines", "src\EarthML.Pipelines\EarthML.Pipelines.csproj", "{A37F4937-C2FA-484C-B4D8-08B1BBE9BF89}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{26CFFD81-A485-4C95-954F-D39ED901DFC6}"
 	ProjectSection(SolutionItems) = preProject
@@ -19,9 +19,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerScheduler.AzureContainerInstance", "src\EarthML.DockerScheduler.AzureContainerInstance\EarthML.DockerScheduler.AzureContainerInstance.csproj", "{3EDB1EF6-C0AF-4EB9-A711-FE0B78E1C10F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerPipeline.ServiceProvider", "apps\EarthML.DockerPipeline.ServiceProvider\EarthML.DockerPipeline.ServiceProvider.csproj", "{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.Pipelines.ServiceProvider", "apps\EarthML.Pipelines.ServiceProvider\EarthML.Pipelines.ServiceProvider.csproj", "{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}"
 EndProject
-Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "EarthML.Pipelines.Application", "apps\EarthML.DockerPipeline.Application\EarthML.Pipelines.Application.sfproj", "{EB490EAC-7A8E-4248-8A4D-D3287B21E76A}"
+Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "EarthML.Pipelines.Application", "apps\EarthML.Pipelines.Application\EarthML.Pipelines.Application.sfproj", "{EB490EAC-7A8E-4248-8A4D-D3287B21E76A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{1DC97C26-F5C8-4888-9D36-867EEC7566C3}"
 EndProject

@@ -1,5 +1,5 @@
-﻿using EarthML.DockerPipeline;
-using EarthML.DockerPipeline.Document;
+﻿using EarthML.Pipelines;
+using EarthML.Pipelines.Document;
 using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.ContainerInstance.Fluent.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;

@@ -155,5 +155,5 @@ It is possible to execute the same step/command multiple times in a loop, where 
 
 To run a pipeline using the CLI, one may run 
 ```
-EarthML.DockerPipeline.Cli --pipeline exampleJob.json --numberOfProcesses 4 --lidarInputFolder "D:/PKS/LiDAR" --lidarTilesFolder "D:/PKS/potree/tiles" --lidarTempFolder "D:/PKS/potree/tmp" --potreeOutputFolder "D:/PKS/potree/dist"
+EarthML.Pipelines.Cli --pipeline exampleJob.json --numberOfProcesses 4 --lidarInputFolder "D:/PKS/LiDAR" --lidarTilesFolder "D:/PKS/potree/tiles" --lidarTempFolder "D:/PKS/potree/tmp" --potreeOutputFolder "D:/PKS/potree/dist"
 ```

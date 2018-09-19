@@ -1,4 +1,4 @@
-using EarthML.DockerPipeline;
+using EarthML.Pipelines;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using Sprache;
