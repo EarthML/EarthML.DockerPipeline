@@ -2,7 +2,7 @@
 using EarthML.Pipelines;
 using EarthML.Pipelines.Document;
 using EarthML.Pipelines.Parameters;
-using Karambolo.Extensions.Logging.File;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
