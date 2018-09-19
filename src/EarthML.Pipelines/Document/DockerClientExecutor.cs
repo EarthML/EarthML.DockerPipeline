@@ -1,5 +1,6 @@
 ﻿using Docker.DotNet;
 using Docker.DotNet.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -15,12 +16,12 @@ namespace EarthML.Pipelines.Document
     public class DockerClientExecutor : DockerPipelineExecutor
     {
         private readonly DockerClient client;
-        private readonly string logpath;
+        private readonly ILogger logger;
 
-        public DockerClientExecutor(DockerClient dockerClient, string logpath)
+        public DockerClientExecutor(DockerClient dockerClient, ILogger logger)
         {
-            this.client = dockerClient;
-            this.logpath = logpath;
+            this.client = dockerClient ?? throw new ArgumentNullException(nameof(dockerClient));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         public async Task<string> ExecuteStepAsync(ExpressionParser parser, string[] arguments, JToken part,  IDictionary<string,JObject> volumnes, CancellationToken cancellationToken)
         {
@@ -93,13 +94,15 @@ namespace EarthML.Pipelines.Document
 
 
             }
-            Console.WriteLine(JToken.FromObject(volumnes).ToString(Newtonsoft.Json.Formatting.Indented));
+
+            logger.LogInformation("Using {@volumnes}",volumnes);
+
+         //   Console.WriteLine(JToken.FromObject(volumnes).ToString(Newtonsoft.Json.Formatting.Indented));
 
             var binds = volumnes.Select((v, i) => $"{v.Value.SelectToken("$.mountedFrom")?.ToString() ?? v.Value.SelectToken("$.localName")?.ToString() ?? v.Key}:{v.Value.SelectToken("$.mountedAt").ToString()}").ToList();
 
-            Console.WriteLine(JToken.FromObject(binds).ToString());
-            Console.WriteLine(JToken.FromObject(volumneMounts).ToString());
-
+            logger.LogInformation("Using {@volumnes}, {@binds} and {@volumneMounts}", volumnes,binds, volumneMounts);
+          
             var image = part.SelectToken("$.image").ToString();
             var tag = "latest";
 
@@ -109,30 +112,33 @@ namespace EarthML.Pipelines.Document
                 image = imgParts.First();
                 tag = imgParts.Last();
             }
-
+            logger.LogInformation("Using {image}:{tag}", image, tag);
             if (!(part.SelectToken("$.skipImageDownload")?.ToObject<bool>() ?? false))
             {
                 try
                 {
-                    await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = image, Tag = tag}, new AuthConfig
+                    using (var s = logger.BeginScope("creating {image}:{tag}", image, tag))
                     {
 
-                    }, new Progress<JSONMessage>((c) => Console.WriteLine(c.ProgressMessage)));
+                        await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = image, Tag = tag }, new AuthConfig
+                        {
+
+                        }, new Progress<JSONMessage>((c) => { logger.LogInformation("{@progress}", c); }));//if (!string.IsNullOrEmpty(c.ProgressMessage)){ logger.LogInformation(c.ProgressMessage); } }));
+                    }
                 }
                 catch (Docker.DotNet.DockerApiException ex)
                 {
 
-                    Console.WriteLine(ex.ResponseBody);
+                    logger.LogError(ex, "Failed to create image {image}:{tag}, {error}", image, tag, ex.ResponseBody);
+                     
 
                 }
             }
-          
 
-          
-            
-             
 
-                var container = await client.Containers.CreateContainerAsync(new CreateContainerParameters
+
+
+            var co = new CreateContainerParameters
             {
                 Hostname = "",
                 Domainname = "",
@@ -143,9 +149,9 @@ namespace EarthML.Pipelines.Document
                 Tty = part.SelectToken("$.tty")?.ToObject<bool>() ?? true,
                 Volumes = volumneMounts.ToDictionary(volume => volume, v => new EmptyStruct()),
                 Image = part.SelectToken("$.image").ToString(),
-               
+
                 Cmd = arguments,
-                
+
                 HostConfig = new HostConfig
                 {
                     LogConfig = new LogConfig { Type = "json-file" },
@@ -153,7 +159,13 @@ namespace EarthML.Pipelines.Document
                     Binds = binds,
                 }
 
-            });
+            };
+            logger.LogInformation("Creating {@container}",co);
+
+            var container = await client.Containers.CreateContainerAsync(co);
+
+            logger.LogInformation("Starting {@container}",container);
+
             await client.Containers.StartContainerAsync(container.ID, new ContainerStartParameters {  }, cancellationToken);
 
             // Console.WriteLine(string.Join("\n", container.Warnings));
@@ -161,11 +173,12 @@ namespace EarthML.Pipelines.Document
 
             await WriteLog(client, container, new ContainerLogsParameters { ShowStderr = true }, cancellationToken);
             var stdOut = await WriteLog(client, container, new ContainerLogsParameters { ShowStdout = true }, cancellationToken);
-
-            if (!string.IsNullOrEmpty(logpath))
+            using (var scope = logger.BeginScope($"{parser.Id}-{part["name"]}.log"))
             {
-                File.WriteAllText(Path.Combine(logpath, $"{parser.Id}-{part["name"]}.log"), stdOut);
+                logger.LogInformation(stdOut);
             }
+           
+                
 
             await client.Containers.RemoveContainerAsync(container.ID, new ContainerRemoveParameters { Force = true }, cancellationToken);
             return stdOut;

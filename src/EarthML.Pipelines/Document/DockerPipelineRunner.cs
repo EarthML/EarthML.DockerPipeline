@@ -1,4 +1,6 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -56,14 +58,25 @@ namespace EarthML.Pipelines.Document
     }
     public class DockerPipelineRunner
     {
+        private readonly ILogger logger;
         private ExpressionParser parser;
         private DockerPipelineExecutor executor;
         private DockerPipelineRunnerOptions options;
 
-        public DockerPipelineRunner(ExpressionParser parser, DockerPipelineExecutor executor, DockerPipelineRunnerOptions options =null)  
+        public DockerPipelineRunner(
+            ILogger logger,
+            ExpressionParser parser,
+            DockerPipelineExecutor executor, 
+            DockerPipelineRunnerOptions options =null)  
         {
-            this.executor = executor;
-            this.parser = parser;
+          
+           // var services = new ServiceCollection();
+            
+
+
+            this.executor = executor ?? throw new ArgumentNullException(nameof(executor));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.parser = parser ?? throw new ArgumentNullException(nameof(parser));
             this.options = options ?? new DockerPipelineRunnerOptions();
             parser.Functions["stdout"] = (document, arguments) => "hello world";
             parser.Functions["numbers"] = (document, arguments) => new JArray(arguments.SelectMany(c => c).Select(c => double.Parse(c.ToString())));
@@ -101,6 +114,7 @@ namespace EarthML.Pipelines.Document
                 foreach(JObject imageRegistryCredential in imageRegistryCredentials)
                 {
                     HandleObjReplacement(imageRegistryCredential);
+                    logger.LogInformation("using {@imageRegistryCredential}", imageRegistryCredential);
                 }
             }
 
@@ -125,8 +139,10 @@ namespace EarthML.Pipelines.Document
 
 
 
-
+                    logger.LogInformation("using {@parallelContext}: {parallelKey} {parallelBlocker}", parallelContext, parallelKey, parallelBlocker);
                 }
+
+                 
 
                 var semaphoreObject = options.GetSemaphore(parallelKey, parallelBlocker); //
           
@@ -208,10 +224,14 @@ namespace EarthML.Pipelines.Document
                 var loop = part.SelectToken("loop");
                 if (loop != null)
                 {
-                    if(loop.Type == JTokenType.String && loop.ToString().StartsWith("["))
+                   
+
+                    if (loop.Type == JTokenType.String && loop.ToString().StartsWith("["))
                     {
                         loop = parser.Evaluate(loop.ToString());
                     }
+
+                    logger.LogInformation("using {@loop}", loop);
 
                     foreach (var loopVar in loop)
                     {
@@ -270,7 +290,8 @@ namespace EarthML.Pipelines.Document
 
                         var runCommand = $"docker run {string.Join(" ", binds.Select(b => $"-v {b}"))} {part.SelectToken("$.image").ToString()} {string.Join(" ", arguments)}";
 
-                        Console.WriteLine(runCommand);
+                        logger.LogInformation(runCommand);
+                        
 
                         string stdOut = await executor.ExecuteStepAsync(parser, arguments, part, volumnes, cancellationToken);
 
@@ -286,15 +307,15 @@ namespace EarthML.Pipelines.Document
                             }
                         }
 
-                        Console.WriteLine("stdout:");
-                        Console.WriteLine(stdOut.ToString());
-
+                        //Console.WriteLine("stdout:");
+                       // Console.WriteLine(stdOut.ToString());
+                         
 
 
 
                         //  await client.Containers.RemoveContainerAsync(container.ID, new ContainerRemoveParameters { RemoveVolumes = true, RemoveLinks = true, Force = true });
 
-                        Console.WriteLine(part.ToString());
+                       // Console.WriteLine(part.ToString());
                     }
                     finally
                     {
@@ -315,10 +336,12 @@ namespace EarthML.Pipelines.Document
 
                 block.Complete();
                 await block.Completion;
+              
                 {
                     var outputs = part["outputs"] as JObject ?? new JObject();
                     outputs["completed"] = true;
                     part["outputs"] = outputs;
+                    logger.LogInformation("pipeline completed with {output}", outputs);
                 }
 
 

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Sprache;
 using System;
 using System.Collections.Generic;
@@ -46,11 +47,12 @@ namespace EarthML.Pipelines
                                                            from num in Parse.Decimal
                                                            from trailingSpaces in Parse.Char(' ').Many()
                                                            select new DecimalConstantEvaluator(decimal.Parse(num) * (op.IsDefined ? -1 : 1));
+        private readonly ILogger logger;
 
         public JToken Document { get; set; }
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
        
-        public ExpressionParser(JToken document)
+        public ExpressionParser(JToken document, ILogger logger)
         {
             Constant = Parse.LetterOrDigit.AtLeastOnce().Text().Select(k => new ConstantEvaluator(k));
 
@@ -73,6 +75,7 @@ namespace EarthML.Pipelines
                            select new ArrayIndexLookup(text); ;
 
             Document = document;
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         private IJTokenEvaluator[] FixArrayIndexers(IJTokenEvaluator[][] enumerable)
@@ -105,8 +108,11 @@ namespace EarthML.Pipelines
         {
             if (!Functions.ContainsKey(name))
                 throw new Exception($"{name} not found in functions");
-            return Functions[name](Document,arguments);
+           
+            var value= Functions[name](Document,arguments);
+            
 
+            return value;
         }
 
         IJTokenEvaluator CallFunction(string name, IJTokenEvaluator[] parameters)
@@ -115,31 +121,39 @@ namespace EarthML.Pipelines
         }
 
         public JToken Evaluate(string str)
-        {  
+        {
+            var value= EvaluateImp(str);
+            logger.LogInformation("Evaluating '{str}' to '{value}'", str, value.ToString());
+            return value;
 
-            Parser<IJTokenEvaluator[]> stringParser =  
+        }
+
+        private JToken EvaluateImp(string str)
+        {
+            Parser<IJTokenEvaluator[]> stringParser =
                  from first in Parse.Char('[')
-                 from evaluator in Tokenizer  
+                 from evaluator in Tokenizer
                  from last in Parse.Char(']')
                  select evaluator;
 
 
 
             var func = stringParser.Parse(str).ToArray();
-            if(func.Length == 1)
-             return func.First().Evaluate();
+            if (func.Length == 1)
+                return func.First().Evaluate();
 
-            for(var i = 0; i < func.Length; i++)
+            for (var i = 0; i < func.Length; i++)
             {
                 if (func[i] is ArrayIndexLookup array)
                 {
-                    var arrayToken = func[i-1].Evaluate();
+                    var arrayToken = func[i - 1].Evaluate();
                     if (arrayToken.Type != JTokenType.Array)
                         throw new Exception("not an array");
 
                     return arrayToken[int.Parse(array.parsedText)];
 
-                }else if( func[i] is ObjectLookup objectLookup)
+                }
+                else if (func[i] is ObjectLookup objectLookup)
                 {
                     var arrayToken = func[i - 1].Evaluate();
                     if (arrayToken.Type != JTokenType.Object)
@@ -151,12 +165,6 @@ namespace EarthML.Pipelines
             }
 
             return null;
-           
-
-
         }
-
-
-
     }
 }

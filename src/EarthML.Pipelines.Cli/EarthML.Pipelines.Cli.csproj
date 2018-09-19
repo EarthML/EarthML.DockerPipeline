@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EarthML.DockerPipeline\EarthML.DockerPipeline.csproj" />
+    <ProjectReference Include="..\EarthML.Pipelines\EarthML.Pipelines.csproj" />
     <ProjectReference Include="..\EarthML.DockerScheduler.AzureContainerInstance\EarthML.DockerScheduler.AzureContainerInstance.csproj" />
   </ItemGroup>
 

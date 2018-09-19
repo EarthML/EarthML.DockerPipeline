@@ -219,13 +219,13 @@ namespace EarthML.Pipelines.ServiceProvider
                 (sp, context, actorType, factory) => new ActorBaseService<PipelineRunnerActorDocument>(context, actorType, factory));
 
             container.WithStatefullService<PipelineRunnerService>("PipelineRunnerServiceType");
-          
-           
+
+            container.WithStatelessService<PipelineExecutorService>("EarthML.Pipelines.PipelineExecutorServiceType");
 
             container.WithKestrelHosting<Startup>("EarthML.Pipelines.ServiceProviderType",
                 new KestrelHostingServiceOptions
                 {
-                    GatewayApplicationName ="EarthML.Gateway",
+                 //   GatewayApplicationName ="EarthML.Gateway",
                     GatewayOptions = new GatewayOptions
                     {
                         Key = "EarthML.Pipelines.ServiceProviderType",

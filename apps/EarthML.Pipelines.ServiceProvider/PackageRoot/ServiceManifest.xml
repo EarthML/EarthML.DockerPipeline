@@ -4,6 +4,7 @@
     <!-- This is the name of your ServiceType.
          The UseImplicitHost attribute indicates this is a guest service. -->
     <StatelessServiceType ServiceTypeName="EarthML.Pipelines.ServiceProviderType" />
+    <StatelessServiceType ServiceTypeName="EarthML.Pipelines.PipelineExecutorServiceType" />
     <StatefulServiceType ServiceTypeName="PipelineRunnerServiceType" HasPersistedState="true" />
     <StatefulServiceType ServiceTypeName="PipelineRunnerActorServiceType" HasPersistedState="true">
       <Extensions>
@@ -32,6 +33,7 @@
     </EntryPoint>
     <EnvironmentVariables>
       <EnvironmentVariable Name="ASPNETCORE_ENVIRONMENT" Value="Development" />
+      <EnvironmentVariable Name="APPLICATION_INSIGHTS" Value="10e77ea7-1d38-40f7-901c-ef3c2e7d48ef" />
     </EnvironmentVariables>
   </CodePackage>
   <!-- Config package is the contents of the Config directoy under PackageRoot that contains an

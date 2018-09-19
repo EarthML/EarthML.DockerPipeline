@@ -1,4 +1,5 @@
 using EarthML.Pipelines;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using Sprache;
@@ -17,10 +18,17 @@ namespace DockerPipelineTests
     [TestClass]
     public class UnitTest1
     {
+        ILogger logger;
+        public UnitTest1()
+        {
+            var loggerFactory = new LoggerFactory();
+            logger = loggerFactory.CreateLogger(this.GetType());
+        }
+       
         [TestMethod]
         public void canStringHaveProps()
         {
-            var parser = new ExpressionParser(new JObject())
+            var parser = new ExpressionParser(new JObject(),logger)
                 .AddRegex().AddSplit().AddAll().AddConcat();
             parser.Functions["test"] = 
                 (d,a)=> new JObject(new JProperty("a",1));
@@ -31,7 +39,7 @@ namespace DockerPipelineTests
         [TestMethod]
         public void TestSplitArrayIndex()
         {
-            var parser = new ExpressionParser(new JObject())
+            var parser = new ExpressionParser(new JObject(), logger)
               .AddRegex().AddSplit().AddAll().AddConcat();
 
             Assert.AreEqual("test", parser.Evaluate("[concat(split('test','es')[0],'est')]"));
@@ -40,7 +48,7 @@ namespace DockerPipelineTests
         [TestMethod]
         public void TestDateWeek()
         {
-            var parser = new ExpressionParser(new JObject())
+            var parser = new ExpressionParser(new JObject(), logger)
               .AddRegex().AddSplit().AddAll().AddConcat();
             Assert.AreEqual("W4", new DateTime(2017, 2, 1).ToString("W4"));
             Assert.AreEqual("2017W5", parser.Evaluate("[date('2017-02-01','yyyyW')]"));
@@ -49,7 +57,7 @@ namespace DockerPipelineTests
         [TestMethod]
         public void DateTest()
         {
-            var parser = new ExpressionParser(new JObject())
+            var parser = new ExpressionParser(new JObject(), logger)
               .AddRegex().AddSplit().AddAll();
 
             Assert.AreEqual("2017Feb", parser.Evaluate("[date('2017-02-15','yyyyMMM')]"));
@@ -59,7 +67,7 @@ namespace DockerPipelineTests
         public void TestMethod1()
         {
              
-            var parser = new ExpressionParser(new JObject())
+            var parser = new ExpressionParser(new JObject(), logger)
                 .AddRegex().AddSplit();
             parser.Functions["add"] = (document,arguments) => 
                 arguments.Aggregate(0.0, (acc, argument) => acc + argument.ToObject<double>());

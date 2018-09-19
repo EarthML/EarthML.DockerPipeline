@@ -4,6 +4,7 @@ using EarthML.Pipelines.Document;
 using EarthML.Pipelines.Parameters;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Newtonsoft.Json;
@@ -109,14 +110,16 @@ namespace EarthML.PipelinesCli
 
                         var args = @event.data.arguments;
 
-                        
+                        var loggerFactory = new LoggerFactory();
+                        var logger = loggerFactory.CreateLogger(this.GetType());
+
                         var ci = new DockerClientExecutor(new DockerClientConfiguration(new Uri(dockerSock))
-                             .CreateClient(),logpath);
+                             .CreateClient(), logger);
 
 
-                        var runner = new DockerPipelineRunner(
+                        var runner = new DockerPipelineRunner(logger,
                              new ExpressionParser(@event.data.pipeline
-                            .UpdateParametersFromConsoleArguments(args))
+                            .UpdateParametersFromConsoleArguments(args), logger)
                             .AddRegex()
                             .AddSplit()
                             .AddConcat()
@@ -193,15 +196,16 @@ namespace EarthML.PipelinesCli
                       .Concat(app.Options.Where(o => o.HasValue()).Select(o => new[] { $"--{o.LongName}", o.Value() }))
                       .SelectMany(m => m).Concat(app.RemainingArguments).ToArray();
 
-
+                var loggerFactory = new LoggerFactory();
+                var logger = loggerFactory.CreateLogger(this.GetType());
 
                 var ci = new DockerClientExecutor(new DockerClientConfiguration(new Uri(dockerSock))
-                     .CreateClient(),logpath);
+                     .CreateClient(), logger);
 
 
-                var runner = new DockerPipelineRunner(
+                var runner = new DockerPipelineRunner(logger,
                      new ExpressionParser(args.ReadAsDocument()
-                    .UpdateParametersFromConsoleArguments(args))
+                    .UpdateParametersFromConsoleArguments(args), logger)
                     .AddRegex()
                     .AddSplit()
                     .AddConcat()
