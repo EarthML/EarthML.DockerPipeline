@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerScheduler.Azu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EarthML.DockerPipeline.ServiceProvider", "apps\EarthML.DockerPipeline.ServiceProvider\EarthML.DockerPipeline.ServiceProvider.csproj", "{3AF43AE3-6496-4EB9-8F1D-999EBAFF289B}"
 EndProject
-Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "EarthML.DockerPipeline.Application", "apps\EarthML.DockerPipeline.Application\EarthML.DockerPipeline.Application.sfproj", "{EB490EAC-7A8E-4248-8A4D-D3287B21E76A}"
+Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "EarthML.Pipelines.Application", "apps\EarthML.DockerPipeline.Application\EarthML.Pipelines.Application.sfproj", "{EB490EAC-7A8E-4248-8A4D-D3287B21E76A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{1DC97C26-F5C8-4888-9D36-867EEC7566C3}"
 EndProject

@@ -228,7 +228,7 @@ namespace EarthML.DockerPipeline.ServiceProvider
                     GatewayOptions = new GatewayOptions
                     {
                         Key = "EarthML.DockerPipeline.ServiceProviderType",
-                        ServerName = "local.earthml.com",
+                        ServerName = "local.earthml.com api.earthml.com",
                         ReverseProxyLocation = new[] { "EarthML.Pipelines" }.BuildResourceProviderLocation(),
                         Ssl = new SslOptions
                         {
